@@ -30,6 +30,11 @@ export class ProjectController {
     return await this.projectService.findOne(id);
   }
 
+  @Get(':projectId/tasks')
+  async getTasksForProject(@Param('projectId') projectId: string) {
+    return await this.projectService.getTasksForProject(projectId);
+  }
+
   @Put(':id')
   async update(
     @Param('id') id: string,

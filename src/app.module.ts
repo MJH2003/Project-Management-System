@@ -4,7 +4,8 @@ import { DbModule } from './db/db.module';
 import { ConfigModule } from '@nestjs/config';
 import { TasksModule } from './tasks/tasks.module';
 import { UsersModule } from './users/users.module';
-import { MjhModule } from './mjh/mjh.module';
+import { CustomFieldsModule } from './custom-fields/custom-fields.module';
+import { TaskFieldValuesModule } from './task-field-values/task-field-values.module';
 
 @Module({
   imports: [
@@ -15,7 +16,8 @@ import { MjhModule } from './mjh/mjh.module';
     }),
     TasksModule,
     UsersModule,
-    MjhModule,
+    CustomFieldsModule,
+    TaskFieldValuesModule,
   ],
   controllers: [],
   providers: [],

@@ -44,12 +44,16 @@ export class TasksService {
       include: {
         project: true,
         assignee: true,
+        TaskFieldValue: {
+          include: { field: true },
+        },
       },
     });
 
     if (!task) {
       throw new NotFoundException(`The Task with id ${id} does not exist`);
     }
+
     return task;
   }
 

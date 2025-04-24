@@ -61,4 +61,14 @@ export class ProjectService {
       where: { id },
     });
   }
+
+  async getTasksForProject(projectId: string) {
+    return await this.prisma.task.findMany({
+      where: { projectId },
+      include: {
+        assignee: true,
+        TaskFieldValue: { include: { field: true } },
+      },
+    });
+  }
 }

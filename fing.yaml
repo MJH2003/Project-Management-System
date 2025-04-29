@@ -1,3 +1,3 @@
-app: 'PMS'
-platform: 'nest'
-port: 8080
+app: pms
+build:
+  node_version: 18

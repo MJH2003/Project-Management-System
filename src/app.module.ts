@@ -6,6 +6,7 @@ import { TasksModule } from './tasks/tasks.module';
 import { UsersModule } from './users/users.module';
 import { CustomFieldsModule } from './custom-fields/custom-fields.module';
 import { TaskFieldValuesModule } from './task-field-values/task-field-values.module';
+import { AuthModule } from './auth/auth.module';
 
 @Module({
   imports: [
@@ -18,6 +19,7 @@ import { TaskFieldValuesModule } from './task-field-values/task-field-values.mod
     UsersModule,
     CustomFieldsModule,
     TaskFieldValuesModule,
+    AuthModule,
   ],
   controllers: [],
   providers: [],

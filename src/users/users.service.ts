@@ -2,13 +2,20 @@ import { Injectable } from '@nestjs/common';
 import { DbService } from 'src/db/db.service';
 import { CreateUserDto } from './dto/create-user.dto';
 import { UpdateUserDto } from './dto/update-user.dto';
+import * as bcrypt from 'bcrypt';
 
 @Injectable()
 export class UsersService {
   constructor(private readonly db: DbService) {}
 
   async create(data: CreateUserDto) {
-    return await this.db.user.create({ data });
+    const hashedPassword = await bcrypt.hash(data.password, 10);
+    return await this.db.user.create({
+      data: {
+        ...data,
+        password: hashedPassword,
+      },
+    });
   }
   async findAll() {
     return await this.db.user.findMany();

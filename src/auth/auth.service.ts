@@ -3,12 +3,14 @@ import { UsersService } from '../users/users.service';
 import { DbService } from '../db/db.service';
 import { CreateUserDto } from '../users/dto/create-user.dto';
 import * as bcrypt from 'bcrypt';
+import { JwtService } from '@nestjs/jwt';
 
 @Injectable()
 export class AuthService {
   constructor(
     private readonly usersService: UsersService,
     private readonly db: DbService,
+    private readonly jwt: JwtService,
   ) {}
 
   async signup(dto: CreateUserDto) {
@@ -21,6 +23,12 @@ export class AuthService {
     if (!user || !(await bcrypt.compare(password, user.password))) {
       throw new UnauthorizedException('Invalid credentials');
     }
-    return { message: 'Login successful', userId: user.id };
+
+    const payload = { sub: user.id, email: user.email };
+    const token = await this.jwt.signAsync(payload);
+
+    return {
+      access_token: token,
+    };
   }
 }

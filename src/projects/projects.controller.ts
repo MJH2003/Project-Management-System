@@ -10,6 +10,7 @@ import {
 } from '@nestjs/common';
 import { CreateProjectDto } from './dto/create-project.dto';
 import { UpdateProjectDto } from './dto/update-project.dto';
+import { AddProjectMemberDto } from './dto/add-project-member.dto';
 import { ProjectService } from './projects.service';
 import { AuthGuard } from '@nestjs/passport';
 
@@ -48,5 +49,18 @@ export class ProjectController {
   @Delete(':id')
   async remove(@Param('id') id: string) {
     return await this.projectService.delete(id);
+  }
+
+  @Post(':id/members')
+  async addMember(
+    @Param('id') projectId: string,
+    @Body() body: AddProjectMemberDto,
+  ) {
+    return await this.projectService.addMember(projectId, body.userId);
+  }
+
+  @Get('my-projects/:userId')
+  async findAllForUser(@Param('userId') userId: string) {
+    return await this.projectService.findAllForUser(userId);
   }
 }

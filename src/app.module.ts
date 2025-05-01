@@ -7,6 +7,7 @@ import { UsersModule } from './users/users.module';
 import { CustomFieldsModule } from './custom-fields/custom-fields.module';
 import { TaskFieldValuesModule } from './task-field-values/task-field-values.module';
 import { AuthModule } from './auth/auth.module';
+import { ProjectMembersModule } from './project-members/project-members.module';
 
 @Module({
   imports: [
@@ -20,6 +21,7 @@ import { AuthModule } from './auth/auth.module';
     CustomFieldsModule,
     TaskFieldValuesModule,
     AuthModule,
+    ProjectMembersModule,
   ],
   controllers: [],
   providers: [],

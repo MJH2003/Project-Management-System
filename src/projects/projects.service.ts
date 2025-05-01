@@ -71,4 +71,40 @@ export class ProjectService {
       },
     });
   }
+
+  async addMember(projectId: string, userId: string) {
+    const project = await this.prisma.project.findUnique({
+      where: { id: projectId },
+    });
+    if (!project) throw new NotFoundException('Project not found');
+
+    await this.prisma.projectMember.upsert({
+      where: {
+        projectId_userId: {
+          projectId,
+          userId,
+        },
+      },
+      update: {},
+      create: {
+        projectId,
+        userId,
+      },
+    });
+
+    return { message: 'User added to project successfully' };
+  }
+
+  async findAllForUser(userId: string) {
+    return await this.prisma.project.findMany({
+      where: {
+        OR: [{ ownerId: userId }, { members: { some: { userId } } }],
+      },
+      include: {
+        owner: true,
+        tasks: true,
+        members: true,
+      },
+    });
+  }
 }

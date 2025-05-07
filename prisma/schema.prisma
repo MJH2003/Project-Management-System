@@ -93,6 +93,7 @@ enum FieldType {
   DATE
   BOOLEAN
   SELECT
+  ASSIGNEE
 }
 
 enum TaskStatus {

@@ -96,17 +96,36 @@ export class ProjectService {
     return { message: 'User added to project successfully' };
   }
 
-  async findAllForUser(userId: string) {
-    return await this.prisma.project.findMany({
-      where: {
-        OR: [{ ownerId: userId }, { members: { some: { userId } } }],
-      },
-      include: {
-        owner: true,
-        tasks: true,
-        members: true,
-      },
-    });
+  async findAllForUser(userId: string, page = 1, limit = 100) {
+    const skip = (page - 1) * limit;
+
+    const [projects, total] = await this.prisma.$transaction([
+      this.prisma.project.findMany({
+        where: {
+          OR: [{ ownerId: userId }, { members: { some: { userId } } }],
+        },
+        skip,
+        take: limit,
+        include: {
+          owner: true,
+          tasks: true,
+          members: true,
+        },
+      }),
+      this.prisma.project.count({
+        where: {
+          OR: [{ ownerId: userId }, { members: { some: { userId } } }],
+        },
+      }),
+    ]);
+
+    return {
+      data: projects,
+      total,
+      page,
+      limit,
+      totalPages: Math.ceil(total / limit),
+    };
   }
 
   async removeMember(

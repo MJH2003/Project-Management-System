@@ -7,6 +7,7 @@ import {
   Delete,
   NotFoundException,
   BadRequestException,
+  Query,
 } from '@nestjs/common';
 import { CustomFieldsService } from './custom-fields.service';
 import { CreateCustomFieldDto } from './dto/create-custom-field.dto';
@@ -24,8 +25,8 @@ export class CustomFieldsController {
     return await this.service.create(dto);
   }
 
-  @Get('project/:projectId')
-  async findByProject(@Param('projectId') projectId: string) {
+  @Get()
+  async findByProject(@Query('projectId') projectId: string) {
     return await this.service.findByProject(projectId);
   }
 

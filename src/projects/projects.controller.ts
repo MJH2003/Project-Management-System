@@ -7,6 +7,7 @@ import {
   Body,
   Param,
   UseGuards,
+  Query,
 } from '@nestjs/common';
 import { Request } from '@nestjs/common';
 import { CreateProjectDto } from './dto/create-project.dto';
@@ -18,29 +19,44 @@ import { AuthGuard } from '@nestjs/passport';
 @Controller('projects')
 export class ProjectController {
   constructor(private readonly projectService: ProjectService) {}
+
   @UseGuards(AuthGuard('jwt'))
   @Post()
   async create(@Body() createProjectDto: CreateProjectDto, @Request() req) {
     const ownerId = req.user.userId;
     return await this.projectService.create(createProjectDto, ownerId);
   }
+
   @UseGuards(AuthGuard('jwt'))
   @Get()
-  async findAll(@Request() req) {
+  async findAll(
+    @Request() req,
+    @Query('page') page = '1',
+    @Query('limit') limit = '10',
+  ) {
     const userId = req.user.userId;
-    return await this.projectService.findAllForUser(userId);
+    const pageNumber = parseInt(page);
+    const limitNumber = parseInt(limit);
+    return await this.projectService.findAllForUser(
+      userId,
+      pageNumber,
+      limitNumber,
+    );
   }
 
+  @UseGuards(AuthGuard('jwt'))
   @Get(':id')
   async findOne(@Param('id') id: string) {
     return await this.projectService.findOne(id);
   }
 
+  @UseGuards(AuthGuard('jwt'))
   @Get(':projectId/tasks')
   async getTasksForProject(@Param('projectId') projectId: string) {
     return await this.projectService.getTasksForProject(projectId);
   }
 
+  @UseGuards(AuthGuard('jwt'))
   @Put(':id')
   async update(
     @Param('id') id: string,
@@ -54,6 +70,7 @@ export class ProjectController {
     return await this.projectService.delete(id);
   }
 
+  @UseGuards(AuthGuard('jwt'))
   @Post(':id/members')
   async addMember(
     @Param('id') projectId: string,
@@ -62,13 +79,8 @@ export class ProjectController {
     return await this.projectService.addMember(projectId, body.userId);
   }
 
-  @Get('my-projects/:userId')
-  async findAllForUser(@Param('userId') userId: string) {
-    return await this.projectService.findAllForUser(userId);
-  }
-
-  @Delete(':id/members/:memberId')
   @UseGuards(AuthGuard('jwt'))
+  @Delete(':id/members/:memberId')
   async removeMember(
     @Param('id') projectId: string,
     @Param('memberId') memberId: string,

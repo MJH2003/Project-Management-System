@@ -62,17 +62,30 @@ model Task {
 }
 
 model CustomField {
-  id         String    @id @default(uuid())
-  projectId  String
-  name       String
-  type       FieldType
-  isRequired Boolean   @default(false)
+  id              String             @id @default(uuid())
+  projectId       String
+  name            String
+  type            FieldType
+  isRequired      Boolean            @default(false)
+  options         Json?
+  dynamicSourceId String?
+  dynamicSource   DynamicDataSource? @relation(fields: [dynamicSourceId], references: [id])
 
   project   Project          @relation(fields: [projectId], references: [id], onDelete: Cascade)
   values    TaskFieldValue[]
-  options   Json?
   createdAt DateTime         @default(now())
   updatedAt DateTime         @updatedAt
+}
+
+model DynamicDataSource {
+  id          String   @id @default(uuid())
+  name        String
+  sourceType  String   @unique
+  description String?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  customFields CustomField[]
 }
 
 model TaskFieldValue {
@@ -93,7 +106,18 @@ enum FieldType {
   DATE
   BOOLEAN
   SELECT
-  ASSIGNEE
+  DYNAMIC_SELECT
+}
+
+enum DynamicDataSourceType {
+  PROJECT_MEMBERS
+  PROJECT_TASKS
+}
+
+enum CustomFieldEntity {
+  USER
+  PROJECT
+  TASK
 }
 
 enum TaskStatus {

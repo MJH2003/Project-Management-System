@@ -1,29 +1,36 @@
-import { Module } from '@nestjs/common';
+import { Module, OnModuleInit } from '@nestjs/common';
+import { ConfigModule } from '@nestjs/config';
+
 import { ProjectsModule } from './projects/projects.module';
 import { DbModule } from './db/db.module';
-import { ConfigModule } from '@nestjs/config';
 import { TasksModule } from './tasks/tasks.module';
 import { UsersModule } from './users/users.module';
 import { CustomFieldsModule } from './custom-fields/custom-fields.module';
 import { TaskFieldValuesModule } from './task-field-values/task-field-values.module';
 import { AuthModule } from './auth/auth.module';
-import { ProjectMembersModule } from './project-members/project-members.module';
+
+import { DynamicDataSourceService } from './custom-fields/dynamic-data-sourse.service';
+import { DbService } from './db/db.service';
 
 @Module({
   imports: [
+    ConfigModule.forRoot({ isGlobal: true }),
     ProjectsModule,
     DbModule,
-    ConfigModule.forRoot({
-      isGlobal: true,
-    }),
     TasksModule,
     UsersModule,
     CustomFieldsModule,
     TaskFieldValuesModule,
     AuthModule,
-    ProjectMembersModule,
   ],
-  controllers: [],
-  providers: [],
+  providers: [DynamicDataSourceService, DbService],
 })
-export class AppModule {}
+export class AppModule implements OnModuleInit {
+  constructor(
+    private readonly dynamicSourceService: DynamicDataSourceService,
+  ) {}
+
+  async onModuleInit() {
+    await this.dynamicSourceService.initializeDefaultSources();
+  }
+}

@@ -6,19 +6,20 @@ import {
 import { DbService } from 'src/db/db.service';
 import { CreateTaskFieldValueDto } from './dto/create-task-field-value.dto';
 import { FieldType } from '@prisma/client';
-import { DynamicDataSourceService } from '../custom-fields/dynamic-data-sourse.service';
+import { DataSourceService } from '../custom-fields/date-source.service';
+
 @Injectable()
 export class TaskFieldValuesService {
   constructor(
     private readonly db: DbService,
-    private readonly dynamicSourceService: DynamicDataSourceService,
+    private readonly dataSourceService: DataSourceService,
   ) {}
 
   async create(dto: CreateTaskFieldValueDto) {
     const field = await this.db.customField.findUnique({
       where: { id: dto.fieldId },
-      include: { dynamicSource: true },
     });
+
     if (!field) {
       throw new NotFoundException('Custom field not found');
     }
@@ -26,6 +27,7 @@ export class TaskFieldValuesService {
     const task = await this.db.task.findUnique({
       where: { id: dto.taskId },
     });
+
     if (!task) {
       throw new NotFoundException('Task not found');
     }
@@ -36,7 +38,7 @@ export class TaskFieldValuesService {
       );
     }
 
-    if (field.type === 'DYNAMIC_SELECT') {
+    if (field.type === 'SELECT' && field.sourceType) {
       await this.validateDynamicValue(dto.value, field, task.projectId);
     } else if (!this.validateType(dto.value, field)) {
       throw new BadRequestException(
@@ -65,7 +67,7 @@ export class TaskFieldValuesService {
   async findByTask(taskId: string) {
     return await this.db.taskFieldValue.findMany({
       where: { taskId },
-      include: { field: { include: { dynamicSource: true } } },
+      include: { field: true },
     });
   }
 
@@ -81,6 +83,9 @@ export class TaskFieldValuesService {
         return typeof value === 'boolean';
       case 'SELECT':
         if (typeof value !== 'string') return false;
+
+        if (field.sourceType) return true;
+
         const options = field.options as string[];
         return Array.isArray(options) && options.includes(value);
       default:
@@ -93,19 +98,19 @@ export class TaskFieldValuesService {
     field: any,
     projectId: string,
   ): Promise<boolean> {
-    if (!field.dynamicSource) {
+    if (!field.sourceType) {
       throw new BadRequestException(
-        'Dynamic field has no data source configured',
+        'SELECT field has no sourceType configured',
       );
     }
 
     const contextData = {
       projectId,
-      userId: null,
+      userId: undefined,
     };
 
-    const options = await this.dynamicSourceService.getSourceData(
-      field.dynamicSource.sourceType,
+    const options = await this.dataSourceService.getSourceData(
+      field.sourceType,
       contextData,
     );
 
@@ -113,7 +118,7 @@ export class TaskFieldValuesService {
 
     if (!validOption) {
       throw new BadRequestException(
-        `The provided value is not valid for this dynamic field`,
+        `The provided value is not valid for this field`,
       );
     }
 

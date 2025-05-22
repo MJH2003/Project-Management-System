@@ -8,14 +8,21 @@ import {
   ValidatorConstraint,
   ValidatorConstraintInterface,
 } from 'class-validator';
-import { FieldType } from '@prisma/client';
+import { FieldType, DataSourceType } from '@prisma/client';
 
-@ValidatorConstraint({ name: 'OptionsValidator', async: false })
-class OptionsValidator implements ValidatorConstraintInterface {
+@ValidatorConstraint({ name: 'SelectOptionsValidator', async: false })
+class SelectOptionsValidator implements ValidatorConstraintInterface {
   validate(options: any, args: ValidationArguments) {
     const object = args.object as CreateCustomFieldDto;
 
     if (object.type === 'SELECT') {
+      if (object.sourceType) {
+        return (
+          options === undefined ||
+          (Array.isArray(options) && options.length === 0)
+        );
+      }
+
       return (
         Array.isArray(options) &&
         options.length > 0 &&
@@ -23,56 +30,46 @@ class OptionsValidator implements ValidatorConstraintInterface {
       );
     }
 
-    if (object.type === 'DYNAMIC_SELECT') {
-      return options === undefined;
-    }
-
-    if (object.type === 'BOOLEAN') {
-      return options === undefined;
-    }
-
-    return true;
+    return options === undefined;
   }
 
   defaultMessage(args: ValidationArguments) {
     const object = args.object as CreateCustomFieldDto;
 
     if (object.type === 'SELECT') {
-      return 'SELECT fields require at least one non-empty option';
-    }
-    if (object.type === 'DYNAMIC_SELECT') {
-      return 'DYNAMIC_SELECT fields should not have options, please provide dynamicSourceId instead';
-    }
-    if (object.type === 'BOOLEAN') {
-      return 'BOOLEAN fields must not have options';
+      if (object.sourceType) {
+        return 'SELECT fields with a sourceType should not have options';
+      }
+      return 'SELECT fields without a sourceType require at least one non-empty option';
     }
 
-    return 'Invalid options';
+    return 'Only SELECT fields should have options';
   }
 }
 
-@ValidatorConstraint({ name: 'DynamicSourceValidator', async: false })
-class DynamicSourceValidator implements ValidatorConstraintInterface {
-  validate(dynamicSourceId: any, args: ValidationArguments) {
+@ValidatorConstraint({ name: 'SourceTypeValidator', async: false })
+class SourceTypeValidator implements ValidatorConstraintInterface {
+  validate(sourceType: any, args: ValidationArguments) {
     const object = args.object as CreateCustomFieldDto;
 
-    if (object.type === 'DYNAMIC_SELECT') {
+    if (object.type === 'SELECT') {
       return (
-        typeof dynamicSourceId === 'string' && dynamicSourceId.trim() !== ''
+        sourceType === undefined ||
+        Object.values(DataSourceType).includes(sourceType)
       );
     }
 
-    return dynamicSourceId === undefined;
+    return sourceType === undefined;
   }
 
   defaultMessage(args: ValidationArguments) {
     const object = args.object as CreateCustomFieldDto;
 
-    if (object.type === 'DYNAMIC_SELECT') {
-      return 'DYNAMIC_SELECT fields require a dynamicSourceId';
+    if (object.type === 'SELECT') {
+      return 'Invalid sourceType provided for SELECT field';
     }
 
-    return 'Only DYNAMIC_SELECT fields should have a dynamicSourceId';
+    return 'Only SELECT fields can have a sourceType';
   }
 }
 
@@ -89,11 +86,12 @@ export class CreateCustomFieldDto {
   @IsUUID()
   projectId: string;
 
-  @Validate(OptionsValidator)
+  @IsOptional()
+  @Validate(SelectOptionsValidator)
   options?: string[];
 
   @IsOptional()
-  @IsUUID()
-  @Validate(DynamicSourceValidator)
-  dynamicSourceId?: string;
+  @IsEnum(DataSourceType)
+  @Validate(SourceTypeValidator)
+  sourceType?: DataSourceType;
 }

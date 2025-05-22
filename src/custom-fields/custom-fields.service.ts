@@ -14,19 +14,11 @@ export class CustomFieldsService {
   constructor(private readonly db: DbService) {}
 
   async create(dto: CreateCustomFieldDto) {
-    if (dto.type === 'DYNAMIC_SELECT' && !dto.dynamicSourceId) {
-      throw new BadRequestException(
-        'DYNAMIC_SELECT fields require a data source',
-      );
-    }
-
-    if (dto.dynamicSourceId) {
-      const source = await this.db.dynamicDataSource.findUnique({
-        where: { id: dto.dynamicSourceId },
-      });
-
-      if (!source) {
-        throw new NotFoundException('Dynamic data source not found');
+    if (dto.type === 'SELECT') {
+      if (!dto.sourceType && (!dto.options || dto.options.length === 0)) {
+        throw new BadRequestException(
+          'SELECT fields require either options or a sourceType',
+        );
       }
     }
 
@@ -43,10 +35,8 @@ export class CustomFieldsService {
       data.options = dto.options;
     }
 
-    if (dto.type === 'DYNAMIC_SELECT' && dto.dynamicSourceId) {
-      data.dynamicSource = {
-        connect: { id: dto.dynamicSourceId },
-      };
+    if (dto.type === 'SELECT' && dto.sourceType) {
+      data.sourceType = dto.sourceType;
     }
 
     return await this.db.customField.create({ data });
@@ -55,14 +45,12 @@ export class CustomFieldsService {
   async findByProject(projectId: string) {
     return await this.db.customField.findMany({
       where: { projectId },
-      include: { dynamicSource: true },
     });
   }
 
   async findOne(id: string) {
     const field = await this.db.customField.findUnique({
       where: { id },
-      include: { dynamicSource: true },
     });
 
     if (!field) {
@@ -85,25 +73,14 @@ export class CustomFieldsService {
       throw new NotFoundException('Custom field not found');
     }
 
-    if (dto.type === 'SELECT' && (!dto.options || dto.options.length === 0)) {
-      throw new BadRequestException(
-        'SELECT fields require at least one option',
-      );
-    }
-
-    if (dto.type === 'DYNAMIC_SELECT' && !dto.dynamicSourceId) {
-      throw new BadRequestException(
-        'DYNAMIC_SELECT fields require a data source',
-      );
-    }
-
-    if (dto.dynamicSourceId) {
-      const source = await this.db.dynamicDataSource.findUnique({
-        where: { id: dto.dynamicSourceId },
-      });
-
-      if (!source) {
-        throw new NotFoundException('Dynamic data source not found');
+    if (dto.type === 'SELECT') {
+      if (
+        dto.sourceType === null &&
+        (!dto.options || dto.options.length === 0)
+      ) {
+        throw new BadRequestException(
+          'SELECT fields without a sourceType require options',
+        );
       }
     }
 
@@ -117,12 +94,12 @@ export class CustomFieldsService {
       data.options = dto.options;
     }
 
-    if (dto.type === 'DYNAMIC_SELECT' && dto.dynamicSourceId) {
-      data.dynamicSource = {
-        connect: { id: dto.dynamicSourceId },
-      };
-    } else {
-      data.dynamicSource = { disconnect: true };
+    if (dto.type === 'SELECT') {
+      if (dto.sourceType === null) {
+        data.sourceType = null;
+      } else if (dto.sourceType) {
+        data.sourceType = dto.sourceType;
+      }
     }
 
     return await this.db.customField.update({
@@ -141,6 +118,12 @@ export class CustomFieldsService {
     if (field.type !== 'SELECT') {
       throw new BadRequestException(
         'Only SELECT fields can have options added',
+      );
+    }
+
+    if (field.sourceType) {
+      throw new BadRequestException(
+        'Cannot add options to SELECT fields with a sourceType',
       );
     }
 

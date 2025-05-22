@@ -9,7 +9,6 @@ import { CustomFieldsModule } from './custom-fields/custom-fields.module';
 import { TaskFieldValuesModule } from './task-field-values/task-field-values.module';
 import { AuthModule } from './auth/auth.module';
 
-import { DynamicDataSourceService } from './custom-fields/dynamic-data-sourse.service';
 import { DbService } from './db/db.service';
 
 @Module({
@@ -23,14 +22,6 @@ import { DbService } from './db/db.service';
     TaskFieldValuesModule,
     AuthModule,
   ],
-  providers: [DynamicDataSourceService, DbService],
+  providers: [DbService],
 })
-export class AppModule implements OnModuleInit {
-  constructor(
-    private readonly dynamicSourceService: DynamicDataSourceService,
-  ) {}
-
-  async onModuleInit() {
-    await this.dynamicSourceService.initializeDefaultSources();
-  }
-}
+export class AppModule {}
